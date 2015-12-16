@@ -16,56 +16,38 @@ package jp.wasabeef.glide.transformations.gpu;
  * limitations under the License.
  */
 
-import com.bumptech.glide.load.Transformation;
-import com.bumptech.glide.load.engine.Resource;
-import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
-import com.bumptech.glide.load.resource.bitmap.BitmapResource;
-
 import android.content.Context;
-import android.graphics.Bitmap;
-
-import jp.co.cyberagent.android.gpuimage.GPUImage;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import jp.co.cyberagent.android.gpuimage.GPUImageBrightnessFilter;
 
 /**
  * brightness value ranges from -1.0 to 1.0, with 0.0 as the normal level
  */
-public class BrightnessFilterTransformation implements Transformation<Bitmap> {
+public class BrightnessFilterTransformation extends GPUFilterTransformation {
 
-    private Context mContext;
-    private BitmapPool mBitmapPool;
+  private float mBrightness;
 
-    private GPUImageBrightnessFilter mFilter = new GPUImageBrightnessFilter();
-    private float mBrightness;
+  public BrightnessFilterTransformation(Context context) {
+    this(context, Glide.get(context).getBitmapPool());
+  }
 
-    public BrightnessFilterTransformation(Context context, BitmapPool pool) {
-        mContext = context;
-        mBitmapPool = pool;
-    }
+  public BrightnessFilterTransformation(Context context, BitmapPool pool) {
+    this(context, pool, 0.0f);
+  }
 
-    public BrightnessFilterTransformation(Context context, BitmapPool pool, float brightness) {
-        mContext = context;
-        mBitmapPool = pool;
-        mBrightness = brightness;
-        mFilter.setBrightness(mBrightness);
-    }
+  public BrightnessFilterTransformation(Context context, float brightness) {
+    this(context, Glide.get(context).getBitmapPool(), brightness);
+  }
 
-    @Override
-    public Resource<Bitmap> transform(Resource<Bitmap> resource, int outWidth, int outHeight) {
-        Bitmap source = resource.get();
+  public BrightnessFilterTransformation(Context context, BitmapPool pool, float brightness) {
+    super(context, pool, new GPUImageBrightnessFilter());
+    mBrightness = brightness;
+    GPUImageBrightnessFilter filter = getFilter();
+    filter.setBrightness(mBrightness);
+  }
 
-        GPUImage gpuImage = new GPUImage(mContext);
-        gpuImage.setImage(source);
-        gpuImage.setFilter(mFilter);
-        Bitmap bitmap = gpuImage.getBitmapWithFilterApplied();
-
-        source.recycle();
-
-        return BitmapResource.obtain(bitmap, mBitmapPool);
-    }
-
-    @Override
-    public String getId() {
-        return "BrightnessFilterTransformation(brightness=" + mBrightness + ")";
-    }
+  @Override public String getId() {
+    return "BrightnessFilterTransformation(brightness=" + mBrightness + ")";
+  }
 }

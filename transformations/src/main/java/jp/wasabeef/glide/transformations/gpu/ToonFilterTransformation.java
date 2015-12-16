@@ -16,58 +16,45 @@ package jp.wasabeef.glide.transformations.gpu;
  * limitations under the License.
  */
 
-import com.bumptech.glide.load.Transformation;
-import com.bumptech.glide.load.engine.Resource;
-import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
-import com.bumptech.glide.load.resource.bitmap.BitmapResource;
-
 import android.content.Context;
-import android.graphics.Bitmap;
-
-import jp.co.cyberagent.android.gpuimage.GPUImage;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import jp.co.cyberagent.android.gpuimage.GPUImageToonFilter;
 
-public class ToonFilterTransformation implements Transformation<Bitmap> {
+/**
+ * The threshold at which to apply the edges, default of 0.2.
+ * The levels of quantization for the posterization of colors within the scene,
+ * with a default of 10.0.
+ */
+public class ToonFilterTransformation extends GPUFilterTransformation {
 
-    private Context mContext;
-    private BitmapPool mBitmapPool;
+  private float mThreshold;
+  private float mQuantizationLevels;
 
-    private GPUImageToonFilter mFilter = new GPUImageToonFilter();
-    private float mThreshold;
-    private float mQuantizationLevels;
+  public ToonFilterTransformation(Context context) {
+    this(context, Glide.get(context).getBitmapPool());
+  }
 
-    public ToonFilterTransformation(Context context, BitmapPool pool) {
-        mContext = context;
-        mBitmapPool = pool;
-    }
+  public ToonFilterTransformation(Context context, BitmapPool pool) {
+    this(context, pool, .2f, 10.0f);
+  }
 
-    public ToonFilterTransformation(Context context, BitmapPool pool,
-            float threshold, float quantizationLevels) {
-        mContext = context;
-        mBitmapPool = pool;
-        mThreshold = threshold;
-        mQuantizationLevels = quantizationLevels;
-        mFilter.setThreshold(mThreshold);
-        mFilter.setQuantizationLevels(mQuantizationLevels);
-    }
+  public ToonFilterTransformation(Context context, float threshold, float quantizationLevels) {
+    this(context, Glide.get(context).getBitmapPool(), threshold, quantizationLevels);
+  }
 
-    @Override
-    public Resource<Bitmap> transform(Resource<Bitmap> resource, int outWidth, int outHeight) {
-        Bitmap source = resource.get();
+  public ToonFilterTransformation(Context context, BitmapPool pool, float threshold,
+      float quantizationLevels) {
+    super(context, pool, new GPUImageToonFilter());
+    mThreshold = threshold;
+    mQuantizationLevels = quantizationLevels;
+    GPUImageToonFilter filter = getFilter();
+    filter.setThreshold(mThreshold);
+    filter.setQuantizationLevels(mQuantizationLevels);
+  }
 
-        GPUImage gpuImage = new GPUImage(mContext);
-        gpuImage.setImage(source);
-        gpuImage.setFilter(mFilter);
-        Bitmap bitmap = gpuImage.getBitmapWithFilterApplied();
-
-        source.recycle();
-
-        return BitmapResource.obtain(bitmap, mBitmapPool);
-    }
-
-    @Override
-    public String getId() {
-        return "ToonFilterTransformation(threshold=" + mThreshold +
-                ",quantizationLevels=" + mQuantizationLevels + ")";
-    }
+  @Override public String getId() {
+    return "ToonFilterTransformation(threshold=" + mThreshold +
+        ",quantizationLevels=" + mQuantizationLevels + ")";
+  }
 }

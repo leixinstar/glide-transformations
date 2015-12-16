@@ -16,57 +16,41 @@ package jp.wasabeef.glide.transformations.gpu;
  * limitations under the License.
  */
 
-import com.bumptech.glide.load.Transformation;
-import com.bumptech.glide.load.engine.Resource;
-import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
-import com.bumptech.glide.load.resource.bitmap.BitmapResource;
-
 import android.content.Context;
-import android.graphics.Bitmap;
-
-import jp.co.cyberagent.android.gpuimage.GPUImage;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import jp.co.cyberagent.android.gpuimage.GPUImageKuwaharaFilter;
 
 /**
- * The radius to sample from when creating the brush-stroke effect, with a default of 3.
+ * Kuwahara all the colors in the image.
+ *
+ * The radius to sample from when creating the brush-stroke effect, with a default of 25.
  * The larger the radius, the slower the filter.
  */
-public class KuwaharaFilterTransformation implements Transformation<Bitmap> {
+public class KuwaharaFilterTransformation extends GPUFilterTransformation {
 
-    private Context mContext;
-    private BitmapPool mBitmapPool;
+  private int mRadius;
 
-    private GPUImageKuwaharaFilter mFilter = new GPUImageKuwaharaFilter();
-    private int mRadius;
+  public KuwaharaFilterTransformation(Context context) {
+    this(context, Glide.get(context).getBitmapPool());
+  }
 
-    public KuwaharaFilterTransformation(Context context, BitmapPool pool) {
-        mContext = context;
-        mBitmapPool = pool;
-    }
+  public KuwaharaFilterTransformation(Context context, BitmapPool pool) {
+    this(context, pool, 25);
+  }
 
-    public KuwaharaFilterTransformation(Context context, BitmapPool pool, int radius) {
-        mContext = context;
-        mBitmapPool = pool;
-        mRadius = radius;
-        mFilter.setRadius(mRadius);
-    }
+  public KuwaharaFilterTransformation(Context context, int radius) {
+    this(context, Glide.get(context).getBitmapPool(), radius);
+  }
 
-    @Override
-    public Resource<Bitmap> transform(Resource<Bitmap> resource, int outWidth, int outHeight) {
-        Bitmap source = resource.get();
+  public KuwaharaFilterTransformation(Context context, BitmapPool pool, int radius) {
+    super(context, pool, new GPUImageKuwaharaFilter());
+    mRadius = radius;
+    GPUImageKuwaharaFilter filter = getFilter();
+    filter.setRadius(mRadius);
+  }
 
-        GPUImage gpuImage = new GPUImage(mContext);
-        gpuImage.setImage(source);
-        gpuImage.setFilter(mFilter);
-        Bitmap bitmap = gpuImage.getBitmapWithFilterApplied();
-
-        source.recycle();
-
-        return BitmapResource.obtain(bitmap, mBitmapPool);
-    }
-
-    @Override
-    public String getId() {
-        return "KuwaharaFilterTransformation(radius=" + mRadius + ")";
-    }
+  @Override public String getId() {
+    return "KuwaharaFilterTransformation(radius=" + mRadius + ")";
+  }
 }

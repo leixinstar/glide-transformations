@@ -1,4 +1,4 @@
-package jp.wasabeef.glide.transformations.gpu;
+package jp.wasabeef.example.glide;
 
 /**
  * Copyright (C) 2015 Wasabeef
@@ -17,21 +17,11 @@ package jp.wasabeef.glide.transformations.gpu;
  */
 
 import android.content.Context;
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
-import jp.co.cyberagent.android.gpuimage.GPUImageSketchFilter;
 
-public class SketchFilterTransformation extends GPUFilterTransformation {
+public class Utils {
 
-  public SketchFilterTransformation(Context context) {
-    this(context, Glide.get(context).getBitmapPool());
-  }
-
-  public SketchFilterTransformation(Context context, BitmapPool pool) {
-    super(context, pool, new GPUImageSketchFilter());
-  }
-
-  @Override public String getId() {
-    return "SketchFilterTransformation()";
+  public static int dip2px(Context context, float dp) {
+    float scale = context.getResources().getDisplayMetrics().density;
+    return (int) (dp * scale + 0.5f);
   }
 }

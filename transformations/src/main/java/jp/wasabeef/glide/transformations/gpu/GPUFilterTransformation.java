@@ -1,4 +1,4 @@
-package jp.wasabeef.glide.transformations;
+package jp.wasabeef.glide.transformations.gpu;
 
 /**
  * Copyright (C) 2015 Wasabeef
@@ -23,40 +23,43 @@ import com.bumptech.glide.load.Transformation;
 import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.resource.bitmap.BitmapResource;
+import jp.co.cyberagent.android.gpuimage.GPUImage;
+import jp.co.cyberagent.android.gpuimage.GPUImageFilter;
 
-public class CropSquareTransformation implements Transformation<Bitmap> {
+public class GPUFilterTransformation implements Transformation<Bitmap> {
 
+  private Context mContext;
   private BitmapPool mBitmapPool;
-  private int mWidth;
-  private int mHeight;
 
-  public CropSquareTransformation(Context context) {
-    this(Glide.get(context).getBitmapPool());
+  private GPUImageFilter mFilter;
+
+  public GPUFilterTransformation(Context context, GPUImageFilter filter) {
+    this(context, Glide.get(context).getBitmapPool(), filter);
   }
 
-  public CropSquareTransformation(BitmapPool pool) {
-    this.mBitmapPool = pool;
+  public GPUFilterTransformation(Context context, BitmapPool pool, GPUImageFilter filter) {
+    mContext = context.getApplicationContext();
+    mBitmapPool = pool;
+    mFilter = filter;
   }
 
   @Override
   public Resource<Bitmap> transform(Resource<Bitmap> resource, int outWidth, int outHeight) {
     Bitmap source = resource.get();
-    int size = Math.min(source.getWidth(), source.getHeight());
+    GPUImage gpuImage = new GPUImage(mContext);
+    gpuImage.setImage(source);
+    gpuImage.setFilter(mFilter);
 
-    mWidth = (source.getWidth() - size) / 2;
-    mHeight = (source.getHeight() - size) / 2;
-
-    Bitmap.Config config =
-        source.getConfig() != null ? source.getConfig() : Bitmap.Config.ARGB_8888;
-    Bitmap bitmap = mBitmapPool.get(mWidth, mHeight, config);
-    if (bitmap == null) {
-      bitmap = Bitmap.createBitmap(source, mWidth, mHeight, size, size);
-    }
+    Bitmap bitmap = gpuImage.getBitmapWithFilterApplied();
 
     return BitmapResource.obtain(bitmap, mBitmapPool);
   }
 
   @Override public String getId() {
-    return "CropSquareTransformation(width=" + mWidth + ", height=" + mHeight + ")";
+    return getClass().getSimpleName();
+  }
+
+  @SuppressWarnings("unchecked") public <T> T getFilter() {
+    return (T) mFilter;
   }
 }
